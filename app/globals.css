@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --bg-primary: #0b1628;
+    --bg-card: #0f1e35;
+    --bg-card-hover: #152540;
+    --border: rgba(59, 130, 246, 0.15);
+    --text-primary: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-[#0b1628] text-slate-100 font-sans antialiased;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-[#0f1e35] border border-blue-500/10 rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold
+           rounded-xl px-6 py-3 transition-colors duration-150 disabled:opacity-50
+           disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center;
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/20 text-white font-medium
+           rounded-xl px-6 py-3 transition-colors duration-150 min-h-[48px]
+           flex items-center justify-center border border-white/10;
+  }
+
+  .input-field {
+    @apply bg-[#152540] border border-blue-500/20 text-slate-100
+           placeholder:text-slate-500 rounded-xl px-4 py-3 w-full
+           focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+           transition-all duration-150 min-h-[48px];
+  }
+
+  .status-normal {
+    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+  }
+
+  .status-elevated {
+    @apply bg-orange-500/20 text-orange-400 border border-orange-500/30;
+  }
+
+  .status-stable {
+    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
+  }
+
+  .status-high {
+    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .status-low {
+    @apply bg-violet-500/20 text-violet-400 border border-violet-500/30;
+  }
+}
+
+/* OTP input styling */
+.otp-input {
+  @apply w-12 h-14 text-center text-2xl font-bold bg-[#152540] border border-blue-500/20
+         rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500
+         focus:border-blue-500 transition-all;
+  caret-color: transparent;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 200ms ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
+/* Bottom nav safe area */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

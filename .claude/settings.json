@@ -1,0 +1,64 @@
+{
+  "mcpServers": {
+    "resend": {
+      "command": "npx",
+      "args": ["resend-mcp"],
+      "env": {
+        "RESEND_API_KEY": "${RESEND_API_KEY}",
+        "SENDER_EMAIL_ADDRESS": "${RESEND_FROM_EMAIL}"
+      }
+    },
+    "cloudinary": {
+      "command": "npx",
+      "args": ["@cloudinary/asset-management-mcp"],
+      "env": {
+        "CLOUDINARY_CLOUD_NAME": "${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}",
+        "CLOUDINARY_API_KEY": "${CLOUDINARY_API_KEY}",
+        "CLOUDINARY_API_SECRET": "${CLOUDINARY_API_SECRET}"
+      }
+    },
+    "render": {
+      "command": "npx",
+      "args": ["render-mcp"],
+      "env": {
+        "RENDER_API_KEY": "${RENDER_API_KEY}"
+      }
+    }
+  },
+  "SessionStart": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/scripts/session-start.sh",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "matcher": "Write|Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/scripts/guard-secrets.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "prompt",
+          "prompt": "Before finishing this session:\n1. Check TODO.md — update status of any tasks touched (🔄 → ✅, or add a note if still in progress)\n2. Check if any docs/ files need updating based on changes made (API-SPEC.md, DATA-MODEL.md, UI-GUIDELINES.md, SERVICES.md)\n3. Add a row to the Session Log in TODO.md summarising what was done\n4. If all looks good, respond with 'approve'. If updates are needed, make them first then respond with 'approve'.",
+          "timeout": 60
+        }
+      ]
+    }
+  ]
+}

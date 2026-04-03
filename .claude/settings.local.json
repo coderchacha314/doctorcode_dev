@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find ~/.claude/projects -type f -name *.md -o -name CLAUDE.md)",
+      "Bash(find ~/.claude -name *.md -type f)",
+      "Bash(find ~/.claude/plugins -name CLAUDE.md -o -name *claude* -type f)",
+      "Bash(grep -E \"\\\\.\\(md|json\\)$\")",
+      "Bash(find ~/.claude/ -type f -name *mcp* -o -name *config*)",
+      "WebSearch",
+      "Bash(npm list:*)",
+      "Bash(find /Users/coderchacha/.claude -type f -name *.json -o -name *.md)",
+      "Bash(chmod:*)",
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@14:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(open:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(gh auth:*)",
+      "Bash(git --version)",
+      "Bash(vercel --version)",
+      "Bash(npx vercel:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
