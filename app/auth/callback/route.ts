@@ -41,27 +41,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(`${origin}/login?error=no_user`);
   }
 
-  // Ensure a Prisma profile exists for this Google user
-  let profile = await prisma.profile.findUnique({
-    where: { supabaseId: user.id },
-    include: { patient: true },
-  });
-
-  if (!profile) {
-    profile = await prisma.profile.create({
-      data: {
-        supabaseId: user.id,
-        email: user.email ?? null,
-        mobile: null,
-        fullName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "New User",
-        gender: null,
-        role: "PATIENT",
-        patient: { create: {} },
-      },
+  try {
+    let profile = await prisma.profile.findUnique({
+      where: { supabaseId: user.id },
       include: { patient: true },
     });
-  }
 
-  const destination = profile.patient?.onboardingComplete ? next : "/clinical-details";
-  return NextResponse.redirect(`${origin}${destination}`);
+    if (!profile) {
+      profile = await prisma.profile.create({
+        data: {
+          supabaseId: user.id,
+          email: user.email ?? null,
+          mobile: null,
+          fullName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "New User",
+          gender: null,
+          role: "PATIENT",
+          patient: { create: {} },
+        },
+        include: { patient: true },
+      });
+    }
+
+    const destination = profile.patient?.onboardingComplete ? next : "/clinical-details";
+    return NextResponse.redirect(`${origin}${destination}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[auth/callback] prisma error:", message);
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(message)}`);
+  }
 }
