@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+
+export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
