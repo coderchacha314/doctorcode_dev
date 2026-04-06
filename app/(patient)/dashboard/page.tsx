@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Plus, TrendingUp, Activity } from "lucide-react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -75,6 +76,7 @@ function bsStatusToBadge(s: string): MetricStatus {
 export default function DashboardPage(): React.ReactElement {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -86,8 +88,13 @@ export default function DashboardPage(): React.ReactElement {
 
   useEffect(() => {
     async function fetchAll(): Promise<void> {
+      const profileResponse = await fetch("/api/settings/profile");
+      if (profileResponse.status === 401) {
+        router.push("/api/auth/signout");
+        return;
+      }
       const [profileRes, bsRes, bpRes, trendRes] = await Promise.allSettled([
-        fetch("/api/settings/profile").then((r) => r.json()),
+        Promise.resolve(await profileResponse.json()),
         fetch("/api/readings/blood-sugar?limit=1").then((r) => r.json()),
         fetch("/api/readings/blood-pressure?limit=1").then((r) => r.json()),
         fetch("/api/readings/blood-sugar?limit=7").then((r) => r.json()),
