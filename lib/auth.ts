@@ -16,37 +16,46 @@ export interface AuthUser {
 export async function requireAuth(): Promise<
   { user: AuthUser; error: null } | { user: null; error: NextResponse }
 > {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
+    if (error || !user) {
+      return {
+        user: null,
+        error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { supabaseId: user.id },
+    });
+
+    if (!profile) {
+      return {
+        user: null,
+        error: NextResponse.json(
+          { error: "Profile not found. Please complete registration." },
+          { status: 401 }
+        ),
+      };
+    }
+
+    return {
+      user: { supabaseId: user.id, email: user.email ?? "", profile },
+      error: null,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[requireAuth] error:", message);
     return {
       user: null,
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      error: NextResponse.json({ error: "Internal error", detail: message }, { status: 500 }),
     };
   }
-
-  const profile = await prisma.profile.findUnique({
-    where: { supabaseId: user.id },
-  });
-
-  if (!profile) {
-    return {
-      user: null,
-      error: NextResponse.json(
-        { error: "Profile not found. Please complete registration." },
-        { status: 401 }
-      ),
-    };
-  }
-
-  return {
-    user: { supabaseId: user.id, email: user.email ?? "", profile },
-    error: null,
-  };
 }
 
 /**
