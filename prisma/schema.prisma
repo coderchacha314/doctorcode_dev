@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  PATIENT
+  DOCTOR
+}
+
+enum GlucoseUnit {
+  MMOL // mmol/L
+  MGDL // mg/dL
+}
+
+enum ReadingContext {
+  FASTING
+  POST_MEAL
+  BEFORE_MEAL
+  RANDOM
+  BEDTIME
+}
+
+enum Arm {
+  LEFT
+  RIGHT
+}
+
+// ── Models ─────────────────────────────────────────────────────────────────
+
+model Profile {
+  id         String   @id @default(uuid())
+  supabaseId String   @unique
+  email      String?  @unique   // null for phone-only users
+  mobile     String?  @unique   // E.164 phone, null for email-only users
+  fullName   String
+  gender     String?
+  role       Role     @default(PATIENT)
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  doctor  Doctor?
+  patient Patient?
+}
+
+model Doctor {
+  id        String   @id @default(uuid())
+  profileId String   @unique
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  specialty String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  patients DoctorPatient[]
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  profileId String   @unique
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Clinical details (filled during onboarding)
+  dateOfBirth          DateTime?
+  weight               Float?    // kg
+  height               Float?    // cm
+  bloodType            String?   // A+, A-, B+, B-, AB+, AB-, O+, O-
+  pastMedicalHistory   String?
+  currentMedications   String?
+  onboardingComplete   Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+
+  doctors            DoctorPatient[]
+  bloodSugarReadings BloodSugarReading[]
+  bpReadings         BloodPressureReading[]
+  kidneyReadings     KidneyReading[]
+  liverReadings      LiverReading[]
+  hormonalReadings   HormonalReading[]
+  lipidReadings      LipidReading[]
+  medicalRecords     MedicalRecord[]
+}
+
+model DoctorPatient {
+  id        String   @id @default(uuid())
+  doctorId  String
+  patientId String
+  linkedAt  DateTime @default(now())
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, patientId])
+}
+
+model BloodSugarReading {
+  id         String        @id @default(uuid())
+  patientId  String
+  patient    Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  value      Float
+  unit       GlucoseUnit   @default(MGDL)
+  context    ReadingContext @default(FASTING)
+  notes      String?
+  recordedAt DateTime      @default(now())
+  createdAt  DateTime      @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model BloodPressureReading {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  systolic   Int
+  diastolic  Int
+  pulse      Int?
+  arm        Arm      @default(LEFT)
+  notes      String?
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model KidneyReading {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  creatinine Float?
+  bun        Float?
+  egfr       Float?
+  uricAcid   Float?
+  notes      String?
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model LiverReading {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  alt        Float?
+  ast        Float?
+  alp        Float?
+  bilirubin  Float?
+  albumin    Float?
+  notes      String?
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model HormonalReading {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tsh        Float?
+  t3         Float?
+  t4         Float?
+  cortisol   Float?
+  insulin    Float?
+  notes      String?
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model LipidReading {
+  id               String   @id @default(uuid())
+  patientId        String
+  patient          Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  totalCholesterol Float?
+  ldl              Float?
+  hdl              Float?
+  triglycerides    Float?
+  vldl             Float?
+  notes            String?
+  recordedAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  @@index([patientId, recordedAt])
+}
+
+model MedicalRecord {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name       String
+  fileUrl    String
+  fileType   String   // 'pdf' | 'image'
+  fileSize   Int      // bytes
+  uploadedAt DateTime @default(now())
+
+  @@index([patientId, uploadedAt])
+}

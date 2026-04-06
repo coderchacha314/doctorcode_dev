@@ -1,14 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MoreVertical, Loader2, Lock } from "lucide-react";
+import { MoreVertical, Loader2, Lock, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+type Gender = "Male" | "Female" | "Other";
+
+const COUNTRY_CODES = [
+  { code: "+91", label: "🇮🇳 +91" },
+  { code: "+1",  label: "🇺🇸 +1" },
+  { code: "+44", label: "🇬🇧 +44" },
+  { code: "+61", label: "🇦🇺 +61" },
+  { code: "+971", label: "🇦🇪 +971" },
+  { code: "+65", label: "🇸🇬 +65" },
+];
 
 interface FormData {
   dob: string;
   weight: string;
   height: string;
+  gender: Gender | "";
+  countryCode: string;
+  mobile: string;
   pastMedicalHistory: string;
   currentMedications: string;
 }
@@ -17,6 +31,7 @@ interface FormErrors {
   dob?: string;
   weight?: string;
   height?: string;
+  gender?: string;
 }
 
 function calcBMI(weight: string, height: string): string {
@@ -37,28 +52,54 @@ function bmiLabel(bmi: string): { text: string; cls: string } | null {
 
 export default function ClinicalDetailsPage(): React.ReactElement {
   const [form, setForm] = useState<FormData>({
-    dob: "",
-    weight: "",
-    height: "",
-    pastMedicalHistory: "",
-    currentMedications: "",
+    dob: "", weight: "", height: "",
+    gender: "", countryCode: "+91", mobile: "",
+    pastMedicalHistory: "", currentMedications: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  // If user already completed onboarding, skip straight to dashboard
   useEffect(() => {
-    if (localStorage.getItem("clinicalDetailsComplete")) {
-      router.replace("/dashboard");
-    }
+    fetch("/api/settings/clinical-details")
+      .then((r) => r.json())
+      .then((data) => {
+        const patient = data.patient;
+        if (!patient) return;
+        if (patient.onboardingComplete) { router.replace("/dashboard"); return; }
+        setForm((f) => ({
+          ...f,
+          dob: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().slice(0, 10) : "",
+          weight: patient.weight != null ? String(patient.weight) : "",
+          height: patient.height != null ? String(patient.height) : "",
+        }));
+      })
+      .catch(() => {})
+      .finally(() => setCheckingOnboarding(false));
+
+    // Pre-fill gender/mobile from profile
+    fetch("/api/settings/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        const profile = data.profile;
+        if (!profile) return;
+        if (profile.gender) setForm((f) => ({ ...f, gender: profile.gender as Gender }));
+        if (profile.mobile) {
+          const raw = profile.mobile as string;
+          const cc = COUNTRY_CODES.find((c) => raw.startsWith(c.code));
+          if (cc) setForm((f) => ({ ...f, countryCode: cc.code, mobile: raw.slice(cc.code.length) }));
+          else setForm((f) => ({ ...f, mobile: raw }));
+        }
+      })
+      .catch(() => {});
   }, [router]);
 
   const bmi = calcBMI(form.weight, form.height);
   const bmiInfo = bmiLabel(bmi);
 
-  function update(field: keyof FormData, value: string): void {
+  function update<K extends keyof FormData>(field: K, value: FormData[K]): void {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
   }
@@ -68,6 +109,7 @@ export default function ClinicalDetailsPage(): React.ReactElement {
     if (!form.dob)    errs.dob    = "Date of birth is required.";
     if (!form.weight) errs.weight = "Weight is required.";
     if (!form.height) errs.height = "Height is required.";
+    if (!form.gender) errs.gender = "Please select a gender.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -76,226 +118,228 @@ export default function ClinicalDetailsPage(): React.ReactElement {
     e.preventDefault();
     if (!validate()) return;
     setSaving(true);
-    // TODO: PATCH /api/settings/clinical-details
-    await new Promise((r) => setTimeout(r, 700));
-    setSaving(false);
-    setSaved(true);
-    // Mark onboarding complete so this screen is skipped on future logins
-    localStorage.setItem("clinicalDetailsComplete", "true");
-    setTimeout(() => router.push("/dashboard"), 800);
+    try {
+      const fullMobile = form.mobile.trim()
+        ? `${form.countryCode}${form.mobile.replace(/[\s\-]/g, "")}`
+        : undefined;
+
+      const res = await fetch("/api/settings/clinical-details", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dateOfBirth: form.dob || undefined,
+          weight: form.weight ? parseFloat(form.weight) : undefined,
+          height: form.height ? parseFloat(form.height) : undefined,
+          gender: form.gender || undefined,
+          mobile: fullMobile,
+          pastMedicalHistory: form.pastMedicalHistory || undefined,
+          currentMedications: form.currentMedications || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setErrors({ dob: data.error });
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => router.push("/dashboard"), 800);
+    } catch {
+      setErrors({ dob: "Network error. Please try again." });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (checkingOnboarding) {
+    return (
+      <div className="flex flex-col min-h-dvh items-center justify-center" style={{ backgroundColor: "var(--color-bg)" }}>
+        <Loader2 size={24} className="animate-spin text-blue-500" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#0b1628]">
+    <div className="flex flex-col min-h-dvh transition-colors duration-200" style={{ backgroundColor: "var(--color-bg)" }}>
       {/* Header */}
       <div className="px-4 pt-12 pb-4 flex items-center justify-between">
         <div className="w-9 h-9" />
-        <h1 className="text-sm font-semibold text-white">Clinical Details</h1>
-        <button
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white/10 transition-colors"
-          aria-label="More options"
-        >
+        <h1 className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>Clinical Details</h1>
+        <button className="w-9 h-9 flex items-center justify-center rounded-xl"
+          style={{ backgroundColor: "var(--color-overlay)", color: "var(--color-text-muted)" }}>
           <MoreVertical size={18} />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 px-4 pb-6 gap-6">
-        {/* Page title */}
-        <div>
-          <h2 className="text-2xl font-bold text-white">Health Profile</h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Please provide your health profile for clinical assessment.
-          </p>
+      {/* Progress */}
+      <div className="px-4 mb-6">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-text-dim)" }}>
+          <span>Onboarding</span><span>Step 2 of 2</span>
+        </div>
+        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--color-overlay)" }}>
+          <div className="h-full w-full rounded-full bg-blue-500 transition-all" />
+        </div>
+      </div>
+
+      {/* Intro */}
+      <div className="px-4 mb-6">
+        <div className="card p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <Lock size={15} className="text-blue-500 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>Health Profile Setup</p>
+            <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+              Your clinical data is encrypted and never shared without your consent.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="px-4 flex flex-col gap-5 pb-8">
+
+        {/* Gender */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+            Gender <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["Male", "Female", "Other"] as Gender[]).map((g) => (
+              <button
+                key={g} type="button"
+                onClick={() => update("gender", g)}
+                className={cn(
+                  "py-3 rounded-xl text-sm font-medium transition-all duration-150 min-h-[48px]",
+                  form.gender === g ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "border"
+                )}
+                style={form.gender !== g ? {
+                  backgroundColor: "var(--color-input)",
+                  borderColor: errors.gender ? "rgba(239,68,68,0.5)" : "var(--color-border)",
+                  color: "var(--color-text-muted)",
+                } : {}}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+          {errors.gender && <p className="text-red-500 text-xs" role="alert">{errors.gender}</p>}
         </div>
 
-        {/* ── VITALS ── */}
-        <div className="flex flex-col gap-4">
-          <SectionHeader icon="📋" label="VITALS" />
+        {/* Mobile */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+            Mobile Number <span className="text-xs normal-case font-normal" style={{ color: "var(--color-text-dim)" }}>(optional)</span>
+          </label>
+          <div className="flex gap-2">
+            <select
+              value={form.countryCode}
+              onChange={(e) => update("countryCode", e.target.value)}
+              className="input-field w-28 flex-shrink-0 px-2 text-sm"
+            >
+              {COUNTRY_CODES.map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
+            </select>
+            <div className="relative flex-1">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-muted)" }}>
+                <Phone size={16} />
+              </span>
+              <input
+                type="tel" inputMode="numeric" placeholder="9876543210"
+                value={form.mobile}
+                onChange={(e) => update("mobile", e.target.value.replace(/[^\d\s\-]/g, ""))}
+                className="input-field pl-10"
+                autoComplete="tel-national"
+              />
+            </div>
+          </div>
+        </div>
 
-          {/* Date of Birth */}
+        {/* Date of Birth */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+            Date of Birth <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date" value={form.dob}
+            onChange={(e) => update("dob", e.target.value)}
+            className={cn("input-field", errors.dob && "border-red-500/50")}
+          />
+          {errors.dob && <p className="text-red-500 text-xs" role="alert">{errors.dob}</p>}
+        </div>
+
+        {/* Weight + Height */}
+        <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Date of Birth
+            <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+              Weight (kg) <span className="text-red-500">*</span>
             </label>
             <input
-              type="date"
-              value={form.dob}
-              onChange={(e) => update("dob", e.target.value)}
-              className={cn(
-                "input-field",
-                errors.dob && "border-red-500/50 focus:ring-red-500/30"
-              )}
+              type="number" inputMode="decimal" placeholder="70"
+              value={form.weight}
+              onChange={(e) => update("weight", e.target.value)}
+              className={cn("input-field", errors.weight && "border-red-500/50")}
             />
-            {errors.dob && (
-              <p className="text-red-400 text-xs" role="alert">{errors.dob}</p>
-            )}
+            {errors.weight && <p className="text-red-500 text-xs" role="alert">{errors.weight}</p>}
           </div>
-
-          {/* Weight + Height */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Weight (KG)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="72"
-                  value={form.weight}
-                  onChange={(e) => update("weight", e.target.value)}
-                  className={cn(
-                    "input-field pr-10",
-                    errors.weight && "border-red-500/50"
-                  )}
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none">
-                  kg
-                </span>
-              </div>
-              {errors.weight && (
-                <p className="text-red-400 text-xs" role="alert">{errors.weight}</p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Height (CM)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="175"
-                  value={form.height}
-                  onChange={(e) => update("height", e.target.value)}
-                  className={cn(
-                    "input-field pr-10",
-                    errors.height && "border-red-500/50"
-                  )}
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none">
-                  cm
-                </span>
-              </div>
-              {errors.height && (
-                <p className="text-red-400 text-xs" role="alert">{errors.height}</p>
-              )}
-            </div>
-          </div>
-
-          {/* BMI — auto-calculated, read-only */}
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Body Mass Index (BMI)
-              </label>
-              {bmiInfo && (
-                <span
-                  className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                    bmiInfo.cls
-                  )}
-                >
-                  {bmiInfo.text}
-                </span>
-              )}
-            </div>
-            <div className="input-field flex items-baseline gap-1.5 select-none cursor-not-allowed opacity-80">
-              <span className="text-2xl font-bold text-slate-200">
-                {bmi || "—"}
-              </span>
-              <span className="text-xs text-slate-500">kg/m²</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── MEDICAL HISTORY ── */}
-        <div className="flex flex-col gap-4">
-          <SectionHeader icon="🏥" label="MEDICAL HISTORY" />
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Past Medical History
+            <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+              Height (cm) <span className="text-red-500">*</span>
             </label>
-            <textarea
-              rows={5}
-              placeholder="List any previous surgeries, chronic illnesses, or significant diagnoses."
-              value={form.pastMedicalHistory}
-              onChange={(e) => update("pastMedicalHistory", e.target.value)}
-              className="input-field resize-none leading-relaxed"
+            <input
+              type="number" inputMode="decimal" placeholder="170"
+              value={form.height}
+              onChange={(e) => update("height", e.target.value)}
+              className={cn("input-field", errors.height && "border-red-500/50")}
             />
+            {errors.height && <p className="text-red-500 text-xs" role="alert">{errors.height}</p>}
           </div>
         </div>
 
-        {/* ── CURRENT MEDICATIONS ── */}
-        <div className="flex flex-col gap-4">
-          <SectionHeader icon="💊" label="CURRENT MEDICATIONS" />
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Current Medications
-            </label>
-            <textarea
-              rows={5}
-              placeholder="List medications you are currently taking, including dosage and frequency."
-              value={form.currentMedications}
-              onChange={(e) => update("currentMedications", e.target.value)}
-              className="input-field resize-none leading-relaxed"
-            />
+        {/* BMI preview */}
+        {bmi && bmiInfo && (
+          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: "var(--color-surface)" }}>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>BMI</span>
+            <span className="text-sm font-bold" style={{ color: "var(--color-text)" }}>{bmi}</span>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", bmiInfo.cls)}>
+              {bmiInfo.text}
+            </span>
           </div>
+        )}
+
+        {/* Past Medical History */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+            Past Medical History
+          </label>
+          <textarea
+            rows={3} placeholder="e.g. Hypertension, Type 2 Diabetes…"
+            value={form.pastMedicalHistory}
+            onChange={(e) => update("pastMedicalHistory", e.target.value)}
+            className="input-field resize-none"
+          />
         </div>
 
-        {/* Save & Continue */}
-        <div className="flex flex-col gap-3 mt-auto pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className={cn(
-              "w-full min-h-[52px] rounded-xl font-semibold text-sm text-white",
-              "flex items-center justify-center gap-2 transition-opacity",
-              "bg-gradient-to-r from-blue-600 to-blue-500",
-              "shadow-lg shadow-blue-500/25",
-              "hover:opacity-90 active:opacity-80 disabled:opacity-60"
-            )}
-          >
-            {saving ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Saving…
-              </>
-            ) : saved ? (
-              "✓ Saved!"
-            ) : (
-              "Save & Continue"
-            )}
-          </button>
-
-          <p className="text-[11px] text-center text-slate-600 flex items-center justify-center gap-1.5">
-            <Lock size={10} />
-            Your data is encrypted and visible only to your clinical team.
-          </p>
+        {/* Current Medications */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs uppercase tracking-wider font-medium" style={{ color: "var(--color-text-muted)" }}>
+            Current Medications
+          </label>
+          <textarea
+            rows={3} placeholder="e.g. Metformin 500mg, Lisinopril 10mg…"
+            value={form.currentMedications}
+            onChange={(e) => update("currentMedications", e.target.value)}
+            className="input-field resize-none"
+          />
         </div>
+
+        <button type="submit" className="btn-primary w-full mt-2" disabled={saving || saved}>
+          {saved ? "Saved! Redirecting…" : saving ? (
+            <><Loader2 size={16} className="animate-spin mr-2" />Saving…</>
+          ) : "Complete Setup →"}
+        </button>
       </form>
-    </div>
-  );
-}
-
-function SectionHeader({
-  icon,
-  label,
-}: {
-  icon: string;
-  label: string;
-}): React.ReactElement {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-6 h-6 rounded-md bg-blue-500/20 border border-blue-500/20 flex items-center justify-center text-sm leading-none">
-        {icon}
-      </div>
-      <span className="text-xs font-semibold text-slate-400 tracking-widest uppercase">
-        {label}
-      </span>
     </div>
   );
 }

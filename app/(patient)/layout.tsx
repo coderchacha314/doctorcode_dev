@@ -6,7 +6,7 @@ export default function PatientLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <div className="min-h-dvh bg-[#0b1628] pb-24">
+    <div className="min-h-dvh pb-24 transition-colors duration-200" style={{ backgroundColor: "var(--color-bg)" }}>
       {children}
       <BottomNav />
     </div>

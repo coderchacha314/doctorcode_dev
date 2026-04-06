@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,7 +8,6 @@ export const metadata: Metadata = {
     template: "%s | Clinical Luminance",
   },
   description: "Secure access to your clinical ecosystem",
-  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -23,9 +23,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <head />
-      <body>{children}</body>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        {/* Prevent flash by applying theme before first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark');})();`,
+          }}
+        />
+      </head>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
