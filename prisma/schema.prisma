@@ -33,6 +33,21 @@ enum Arm {
   RIGHT
 }
 
+enum NoteType {
+  PROGRESS
+  DIAGNOSIS
+  TREATMENT
+  FOLLOW_UP
+  REFERRAL
+}
+
+enum TestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 // ── Models ─────────────────────────────────────────────────────────────────
 
 model Profile {
@@ -59,7 +74,10 @@ model Doctor {
   phone     String?
   createdAt DateTime @default(now())
 
-  patients DoctorPatient[]
+  patients      DoctorPatient[]
+  prescriptions Prescription[]
+  medicalNotes  MedicalNote[]
+  orderedTests  DoctorOrderedTest[]
 }
 
 model Patient {
@@ -79,6 +97,9 @@ model Patient {
   createdAt DateTime @default(now())
 
   doctors            DoctorPatient[]
+  prescriptions      Prescription[]
+  medicalNotes       MedicalNote[]
+  orderedTests       DoctorOrderedTest[]
   bloodSugarReadings BloodSugarReading[]
   bpReadings         BloodPressureReading[]
   kidneyReadings     KidneyReading[]
@@ -203,4 +224,52 @@ model MedicalRecord {
   uploadedAt DateTime @default(now())
 
   @@index([patientId, uploadedAt])
+}
+
+model Prescription {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId   String
+  doctor     Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  medication String
+  dosage     String
+  frequency  String
+  duration   String?
+  notes      String?
+  issuedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, issuedAt])
+}
+
+model MedicalNote {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  type      NoteType @default(PROGRESS)
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model DoctorOrderedTest {
+  id          String     @id @default(uuid())
+  patientId   String
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  testName    String
+  category    String?
+  status      TestStatus @default(PENDING)
+  result      String?    @db.Text
+  orderedAt   DateTime   @default(now())
+  completedAt DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([patientId, orderedAt])
 }

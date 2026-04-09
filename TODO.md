@@ -79,11 +79,18 @@ Last updated: 2026-04-01
 
 ## Phase 5: Doctor Features
 
-- ⬜ Build doctor dashboard (`app/doctor/page.tsx`) — patient list
-- ⬜ Build `PatientCard` component with alert count
-- ⬜ Build `GET /api/doctor/patients` route
-- ⬜ Build patient detail page (`app/doctor/patients/[id]/page.tsx`)
-- ⬜ Build `GET /api/doctor/patients/[id]/readings` route
+- ✅ Build doctor login page (`app/doctor/login/page.tsx`) — email/password auth
+- ✅ Build doctor register page (`app/doctor/register/page.tsx`)
+- ✅ Build doctor dashboard (`app/doctor/dashboard/page.tsx`) — patient list + MR search
+- ✅ Build patient detail page (`app/doctor/patients/[id]/page.tsx`) — Overview/Prescriptions/Notes/Tests tabs
+- ✅ Build `POST /api/doctor/auth/register` — create doctor account
+- ✅ Build `POST /api/doctor/auth/ensure-profile` — verify doctor session
+- ✅ Build `GET /api/doctor/patients` — list + search by MR number
+- ✅ Build `POST /api/doctor/patients/[id]/link` — link patient to doctor
+- ✅ Build `GET|POST /api/doctor/patients/[id]/prescriptions`
+- ✅ Build `GET|POST /api/doctor/patients/[id]/notes`
+- ✅ Build `GET|POST|PATCH /api/doctor/patients/[id]/tests`
+- ✅ Add Prescription, MedicalNote, DoctorOrderedTest models to schema + migrated
 - ⬜ Show blood sugar + blood pressure charts on patient detail
 - ⬜ Out-of-range alert badge on PatientCard
 
@@ -165,6 +172,7 @@ Use this section to track what was worked on each session.
 |------|----------------|-------|
 | 2026-04-01 | Created all reference docs | Phase 1 docs complete |
 | 2026-04-03 | Built full patient flow UI from wireframes | Login, Register, OTP, Dashboard, Blood Sugar, Medical Vault, Profile, Clinical Details — all build clean |
+| 2026-04-09 | Built complete doctor module | Doctor login/register (email+password), dashboard with MR search, patient detail with Prescriptions/Notes/Tests tabs, 7 API routes, 3 new DB models migrated |
 
 ---
 

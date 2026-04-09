@@ -47,21 +47,45 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       include: { patient: true },
     });
 
+    const isDoctor = user.user_metadata?.role === "DOCTOR";
+
     if (!profile) {
-      profile = await prisma.profile.create({
-        data: {
-          supabaseId: user.id,
-          email: user.email ?? null,
-          mobile: null,
-          fullName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "New User",
-          gender: null,
-          role: "PATIENT",
-          patient: { create: {} },
-        },
-        include: { patient: true },
-      });
+      if (isDoctor) {
+        profile = await prisma.profile.create({
+          data: {
+            supabaseId: user.id,
+            email: user.email ?? null,
+            mobile: null,
+            fullName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "Doctor",
+            gender: null,
+            role: "DOCTOR",
+            doctor: {
+              create: {
+                specialty: user.user_metadata?.specialty ?? null,
+              },
+            },
+          },
+          include: { patient: true },
+        });
+      } else {
+        profile = await prisma.profile.create({
+          data: {
+            supabaseId: user.id,
+            email: user.email ?? null,
+            mobile: null,
+            fullName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "New User",
+            gender: null,
+            role: "PATIENT",
+            patient: { create: {} },
+          },
+          include: { patient: true },
+        });
+      }
     }
 
+    if (profile.role === "DOCTOR") {
+      return NextResponse.redirect(`${origin}/doctor/dashboard`);
+    }
     const destination = profile.patient?.onboardingComplete ? next : "/clinical-details";
     return NextResponse.redirect(`${origin}${destination}`);
   } catch (err) {

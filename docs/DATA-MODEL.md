@@ -6,12 +6,23 @@
 User (Supabase Auth)
   │
   ├─── Doctor (1:1 with User where role = 'DOCTOR')
-  │       └─── has many Patients (via DoctorPatient join)
+  │       ├─── has many Patients (via DoctorPatient join)
+  │       ├─── has many Prescriptions (authored)
+  │       ├─── has many MedicalNotes (authored)
+  │       └─── has many DoctorOrderedTests (ordered)
   │
   └─── Patient (1:1 with User where role = 'PATIENT')
           ├─── has many BloodSugarReadings
           ├─── has many BloodPressureReadings
-          └─── linked to one Doctor (via DoctorPatient)
+          ├─── has many KidneyReadings
+          ├─── has many LiverReadings
+          ├─── has many HormonalReadings
+          ├─── has many LipidReadings
+          ├─── has many MedicalRecords
+          ├─── has many Prescriptions (received)
+          ├─── has many MedicalNotes (subject of)
+          ├─── has many DoctorOrderedTests (subject of)
+          └─── linked to Doctors (via DoctorPatient)
 ```
 
 ## Prisma Schema
@@ -129,6 +140,64 @@ enum Arm {
   LEFT
   RIGHT
 }
+
+// Doctor-authored clinical records
+enum NoteType {
+  PROGRESS
+  DIAGNOSIS
+  TREATMENT
+  FOLLOW_UP
+  REFERRAL
+}
+
+enum TestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Prescription {
+  id         String   @id @default(uuid())
+  patientId  String
+  doctorId   String
+  medication String
+  dosage     String
+  frequency  String
+  duration   String?
+  notes      String?
+  issuedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId, issuedAt])
+}
+
+model MedicalNote {
+  id        String   @id @default(uuid())
+  patientId String
+  doctorId  String
+  type      NoteType @default(PROGRESS)
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model DoctorOrderedTest {
+  id          String     @id @default(uuid())
+  patientId   String
+  doctorId    String
+  testName    String
+  category    String?
+  status      TestStatus @default(PENDING)
+  result      String?    @db.Text
+  orderedAt   DateTime   @default(now())
+  completedAt DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([patientId, orderedAt])
+}
 ```
 
 ## Normal Ranges (for StatusBadge and alert logic)
@@ -162,6 +231,9 @@ See `docs/SECURITY.md` for full policy SQL. Summary:
 | `DoctorPatient` | Doctor can see their links; patient can see their links |
 | `BloodSugarReading` | Patient can CRUD their own; linked doctor can READ |
 | `BloodPressureReading` | Patient can CRUD their own; linked doctor can READ |
+| `Prescription` | Doctor can CRUD their own; patient can READ |
+| `MedicalNote` | Doctor can CRUD their own; patient can READ |
+| `DoctorOrderedTest` | Doctor can CRUD their own; patient can READ |
 
 ## Keeping This Document Current
 
