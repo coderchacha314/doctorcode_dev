@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ArrowLeft, ChevronRight, Loader2, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -48,6 +48,9 @@ export default function HormonalPage(): React.ReactElement {
   const [refreshKey, setRefreshKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formTsh, setFormTsh] = useState("");
   const [formT3, setFormT3] = useState("");
   const [formT4, setFormT4] = useState("");
@@ -82,6 +85,36 @@ export default function HormonalPage(): React.ReactElement {
     const day = range === "7D" ? ["SUN","MON","TUE","WED","THU","FRI","SAT"][d.getDay()] : `${d.getDate()}/${d.getMonth()+1}`;
     return { day, tsh: r.tsh ?? 0 };
   });
+
+  async function handleScan(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScanError("");
+    setScanning(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch("/api/readings/hormonal/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mimeType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setScanError(data.error ?? "Scan failed"); return; }
+      const { extracted } = data;
+      if (extracted.tsh != null) setFormTsh(String(extracted.tsh));
+      if (extracted.t3 != null) setFormT3(String(extracted.t3));
+      if (extracted.t4 != null) setFormT4(String(extracted.t4));
+      if (extracted.cortisol != null) setFormCortisol(String(extracted.cortisol));
+      if (extracted.insulin != null) setFormInsulin(String(extracted.insulin));
+      if (extracted.reportDate) { setFormDate(extracted.reportDate); setFormTime("08:00"); }
+    } catch { setScanError("Failed to read image."); }
+    finally { setScanning(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
 
   async function handleSave(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -160,6 +193,11 @@ export default function HormonalPage(): React.ReactElement {
             <span className="text-sm font-semibold" style={{ color: "var(--color-text-2)" }}>Log New Entry</span>
           </summary>
           <form onSubmit={handleSave} className="px-4 pb-4 flex flex-col gap-3">
+            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScan} />
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={scanning} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed border-blue-500/40 text-blue-400 text-sm font-medium transition-colors hover:bg-blue-500/10">
+              {scanning ? <><Loader2 size={15} className="animate-spin" />Scanning report…</> : <><ScanLine size={15} />Scan Report Photo</>}
+            </button>
+            {scanError && <p className="text-red-500 text-xs" role="alert">{scanError}</p>}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>TSH (mIU/L)</label>

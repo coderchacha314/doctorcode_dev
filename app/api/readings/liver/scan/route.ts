@@ -17,13 +17,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!image || !mimeType) return NextResponse.json({ error: "image and mimeType are required" }, { status: 400 });
 
   try {
-    const extracted = await extractFromReport(image, mimeType, `This is a medical lab report. Extract kidney function test values if present.
+    const extracted = await extractFromReport(image, mimeType, `This is a medical lab report. Extract liver function test (LFT) values if present.
 Respond ONLY with a JSON object (use null for missing values):
 {
-  "creatinine": <number mg/dL or null>,
-  "bun": <number mg/dL or null>,
-  "egfr": <number mL/min or null>,
-  "uricAcid": <number mg/dL or null>,
+  "alt": <number U/L or null>,
+  "ast": <number U/L or null>,
+  "alp": <number U/L or null>,
+  "bilirubin": <number mg/dL or null>,
+  "albumin": <number g/dL or null>,
   "reportDate": "<YYYY-MM-DD or null>"
 }`);
     return NextResponse.json({ extracted });
