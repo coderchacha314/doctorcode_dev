@@ -187,7 +187,7 @@ export default function KidneyPage(): React.ReactElement {
           </summary>
           <form onSubmit={handleSave} className="px-4 pb-4 flex flex-col gap-3">
             {/* Scan Report */}
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScan} />
+            <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleScan} />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}

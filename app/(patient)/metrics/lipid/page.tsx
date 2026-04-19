@@ -184,7 +184,7 @@ export default function LipidPage(): React.ReactElement {
             <span className="text-sm font-semibold" style={{ color: "var(--color-text-2)" }}>Log New Entry</span>
           </summary>
           <form onSubmit={handleSave} className="px-4 pb-4 flex flex-col gap-3">
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScan} />
+            <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleScan} />
             <button type="button" onClick={() => fileInputRef.current?.click()} disabled={scanning} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed border-blue-500/40 text-blue-400 text-sm font-medium transition-colors hover:bg-blue-500/10">
               {scanning ? <><Loader2 size={15} className="animate-spin" />Scanning report…</> : <><ScanLine size={15} />Scan Report Photo</>}
             </button>

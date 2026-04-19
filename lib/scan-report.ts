@@ -2,28 +2,40 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+type ImageMime = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
 export async function extractFromReport(
-  image: string,
+  data: string,
   mimeType: string,
   prompt: string
 ): Promise<unknown> {
+  const isPdf = mimeType === "application/pdf";
+
+  const fileContent = isPdf
+    ? ({
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data,
+        },
+      } as const)
+    : ({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: mimeType as ImageMime,
+          data,
+        },
+      } as const);
+
   const message = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens: 512,
     messages: [
       {
         role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: image,
-            },
-          },
-          { type: "text", text: prompt },
-        ],
+        content: [fileContent, { type: "text", text: prompt }],
       },
     ],
   });
