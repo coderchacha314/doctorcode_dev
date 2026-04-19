@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowLeft, ChevronRight, Loader2, ScanLine } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -190,16 +191,18 @@ export default function BloodSugarPage(): React.ReactElement {
         <div className="mt-4 flex items-end gap-8">
           <div>
             <p className="text-xs mb-1" style={{ color: "var(--color-text-muted)" }}>Latest Reading</p>
-            <div className="flex items-baseline gap-1">
-              {latest ? (
-                <>
-                  <span className="text-5xl font-bold" style={{ color: "var(--color-text)" }}>{Math.round(latest.value)}</span>
-                  <span className="text-base" style={{ color: "var(--color-text-muted)" }}>mg/dL</span>
-                </>
-              ) : (
-                <span className="text-2xl" style={{ color: "var(--color-text-muted)" }}>No data</span>
-              )}
-            </div>
+            {loading ? <Skeleton className="h-12 w-28 mt-1" /> : (
+              <div className="flex items-baseline gap-1">
+                {latest ? (
+                  <>
+                    <span className="text-5xl font-bold" style={{ color: "var(--color-text)" }}>{Math.round(latest.value)}</span>
+                    <span className="text-base" style={{ color: "var(--color-text-muted)" }}>mg/dL</span>
+                  </>
+                ) : (
+                  <span className="text-2xl" style={{ color: "var(--color-text-muted)" }}>No data</span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex gap-6 pb-1">
             <div>
@@ -275,11 +278,8 @@ export default function BloodSugarPage(): React.ReactElement {
             </div>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 size={20} className="animate-spin text-blue-500" />
-            </div>
-          ) : chartData.length === 0 ? (
+          {loading ? <Skeleton className="h-40 w-full rounded-xl" />
+          : chartData.length === 0 ? (
             <p className="text-center text-sm py-8" style={{ color: "var(--color-text-muted)" }}>
               No readings in this period
             </p>
@@ -301,7 +301,22 @@ export default function BloodSugarPage(): React.ReactElement {
 
       {/* History entries */}
       <div className="px-4 mt-4 flex flex-col gap-2 pb-4">
-        {readings.length === 0 && !loading ? (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="card px-4 py-3 flex items-center gap-4">
+              <Skeleton className="w-9 h-12 rounded-lg" />
+              <Skeleton className="w-px h-8" />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-4 w-14 rounded-full" />
+              </div>
+            </div>
+          ))
+        ) : readings.length === 0 ? (
           <div className="card p-8 text-center">
             <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
               No readings yet. Log your first entry above.

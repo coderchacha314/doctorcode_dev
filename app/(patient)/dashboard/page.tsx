@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Plus, TrendingUp, Activity } from "lucide-react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useTheme } from "@/lib/theme";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -79,6 +80,7 @@ export default function DashboardPage(): React.ReactElement {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [latestBS, setLatestBS] = useState<LatestBS | null>(null);
   const [latestBP, setLatestBP] = useState<LatestBP | null>(null);
@@ -88,6 +90,7 @@ export default function DashboardPage(): React.ReactElement {
 
   useEffect(() => {
     async function fetchAll(): Promise<void> {
+      setLoading(true);
       const profileResponse = await fetch("/api/settings/profile");
       if (profileResponse.status === 401) {
         router.push("/api/auth/signout");
@@ -115,6 +118,7 @@ export default function DashboardPage(): React.ReactElement {
           }))
         );
       }
+      setLoading(false);
     }
     fetchAll();
   }, []);
@@ -158,6 +162,41 @@ export default function DashboardPage(): React.ReactElement {
     fontSize: "12px",
     color: isDark ? "#f1f5f9" : "#0f172a",
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col px-4 pt-12 pb-6 gap-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="w-9 h-9 rounded-xl" />
+        </div>
+        <div className="mt-4 flex flex-col gap-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        {/* Metric cards */}
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card p-4 flex flex-col gap-3">
+              <div className="flex items-start justify-between">
+                <Skeleton className="w-7 h-7 rounded-lg" />
+                <Skeleton className="w-14 h-5 rounded-full" />
+              </div>
+              <Skeleton className="h-7 w-20" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          ))}
+        </div>
+        {/* Chart */}
+        <div className="card p-4 mt-2">
+          <Skeleton className="h-5 w-40 mb-2" />
+          <Skeleton className="h-3 w-32 mb-4" />
+          <Skeleton className="h-44 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">

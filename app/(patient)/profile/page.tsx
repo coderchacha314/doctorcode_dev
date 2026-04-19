@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Camera, CheckCircle, ChevronRight, LogOut, Moon, Sun, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,7 @@ export default function ProfilePage(): React.ReactElement {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +38,8 @@ export default function ProfilePage(): React.ReactElement {
     fetch("/api/settings/profile")
       .then((r) => r.json())
       .then((data) => { if (data.profile) setProfile(data.profile); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setProfileLoading(false));
   }, []);
 
   async function handleLogout(): Promise<void> {
@@ -87,6 +90,37 @@ export default function ProfilePage(): React.ReactElement {
   const initials = profile?.fullName
     ? profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "—";
+
+  if (profileLoading) {
+    return (
+      <div className="flex flex-col px-4 pt-12 pb-6 gap-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="w-9 h-9 rounded-xl" />
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <Skeleton className="w-24 h-24 rounded-full" />
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+        <div className="card overflow-hidden mt-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="px-4 py-3 border-b" style={{ borderColor: "var(--color-divider)" }}>
+              <Skeleton className="h-3 w-24 mb-2" />
+              <Skeleton className="h-4 w-36" />
+            </div>
+          ))}
+        </div>
+        <div className="card p-4">
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-3 w-48 mb-4" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowLeft, ChevronRight, Loader2, ScanLine } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from "recharts";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -159,7 +160,7 @@ export default function BloodPressurePage(): React.ReactElement {
         <div className="mt-4 flex items-end gap-8">
           <div>
             <p className="text-xs mb-1" style={{ color: "var(--color-text-muted)" }}>Latest Reading</p>
-            {latest ? (
+            {loading ? <Skeleton className="h-12 w-36 mt-1" /> : latest ? (
               <div className="flex items-baseline gap-1">
                 <span className="text-5xl font-bold" style={{ color: "var(--color-text)" }}>{latest.systolic}/{latest.diastolic}</span>
                 <span className="text-base" style={{ color: "var(--color-text-muted)" }}>mmHg</span>
@@ -240,7 +241,7 @@ export default function BloodPressurePage(): React.ReactElement {
               ))}
             </div>
           </div>
-          {loading ? <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-blue-500" /></div>
+          {loading ? <Skeleton className="h-40 w-full rounded-xl" />
           : chartData.length === 0 ? <p className="text-center text-sm py-8" style={{ color: "var(--color-text-muted)" }}>No readings in this period</p>
           : mounted ? (
             <ResponsiveContainer width="100%" height={160}>
@@ -261,7 +262,22 @@ export default function BloodPressurePage(): React.ReactElement {
 
       {/* History list */}
       <div className="px-4 mt-4 flex flex-col gap-2 pb-4">
-        {readings.length === 0 && !loading ? (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="card px-4 py-3 flex items-center gap-4">
+              <Skeleton className="w-9 h-12 rounded-lg" />
+              <Skeleton className="w-px h-8" />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-4 w-14 rounded-full" />
+              </div>
+            </div>
+          ))
+        ) : readings.length === 0 ? (
           <div className="card p-8 text-center"><p className="text-sm" style={{ color: "var(--color-text-muted)" }}>No readings yet.</p></div>
         ) : readings.slice(0, 10).map((entry) => {
           const { date, month, time } = formatDate(entry.recordedAt);
