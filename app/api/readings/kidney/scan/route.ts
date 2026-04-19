@@ -27,7 +27,9 @@ Respond ONLY with a JSON object (use null for missing values):
   "reportDate": "<YYYY-MM-DD or null>"
 }`);
     return NextResponse.json({ extracted });
-  } catch {
-    return NextResponse.json({ error: "Could not parse values from report" }, { status: 422 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[kidney/scan]", msg);
+    return NextResponse.json({ error: msg }, { status: 422 });
   }
 }

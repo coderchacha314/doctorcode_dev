@@ -42,6 +42,6 @@ export async function extractFromReport(
 
   const raw = message.content[0].type === "text" ? message.content[0].text : "";
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Could not parse values from report");
+  if (!jsonMatch) throw new Error("No values found in report");
   return JSON.parse(jsonMatch[0]);
 }
