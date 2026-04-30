@@ -85,7 +85,7 @@ export default function RegisterPage(): React.ReactElement {
         <div className="text-center">
           <p className="text-lg font-bold" style={{ color: "var(--color-text)" }}>SehatSaathi</p>
           <p className="text-sm mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-            Har patient ka Digital Saathi
+            Your health at your fingertips
           </p>
         </div>
       </div>

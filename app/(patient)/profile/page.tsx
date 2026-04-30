@@ -243,7 +243,7 @@ export default function ProfilePage(): React.ReactElement {
       </div>
 
       <p className="text-center text-[10px] pb-4" style={{ color: "var(--color-text-dim)" }}>
-        SEHAT SAATHI — HAR PATIENT KA DIGITAL SAATHI
+        SEHAT SAATHI — YOUR HEALTH AT YOUR FINGERTIPS
       </p>
     </div>
   );
