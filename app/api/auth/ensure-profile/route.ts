@@ -48,12 +48,19 @@ export async function POST(): Promise<NextResponse> {
         },
         include: { patient: true },
       });
+    } else if (!profile.patient && profile.role === "PATIENT") {
+      // Profile exists but patient row is missing (e.g. after a DB flush)
+      await prisma.patient.create({ data: { profileId: profile.id } });
+      profile = await prisma.profile.findUnique({
+        where: { supabaseId: user.id },
+        include: { patient: true },
+      });
     }
 
     return NextResponse.json({
       success: true,
-      onboardingComplete: profile.patient?.onboardingComplete ?? false,
-      role: profile.role,
+      onboardingComplete: profile?.patient?.onboardingComplete ?? false,
+      role: profile?.role,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

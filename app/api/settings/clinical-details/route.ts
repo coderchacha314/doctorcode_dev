@@ -59,9 +59,15 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const patient = await prisma.patient.update({
+  const patient = await prisma.patient.upsert({
     where: { profileId: user.profile.id },
-    data: {
+    create: {
+      profileId: user.profile.id,
+      ...patientRest,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      onboardingComplete: true,
+    },
+    update: {
       ...patientRest,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
       onboardingComplete: true,
