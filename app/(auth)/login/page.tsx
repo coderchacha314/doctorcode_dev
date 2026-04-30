@@ -63,16 +63,11 @@ export default function LoginPage(): React.ReactElement {
     <div className="flex flex-col items-center gap-8">
       {/* Logo */}
       <div className="flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <path d="M16 4L6 10v12l10 6 10-6V10L16 4z" stroke="white" strokeWidth="2" strokeLinejoin="round" />
-            <path d="M16 4v18M6 10l10 6 10-6" stroke="white" strokeWidth="2" />
-          </svg>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="SehatSaathi" className="w-20 h-20 object-contain drop-shadow-lg" />
         <div className="text-center">
-          <p className="text-xs text-blue-500 dark:text-blue-400 font-medium tracking-widest uppercase mb-1">Clinical Luminance</p>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>Welcome Back</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>Secure access to your clinical ecosystem</p>
+          <p className="text-xl font-bold" style={{ color: "var(--color-text)" }}>SehatSaathi</p>
+          <p className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-text-muted)" }}>Har patient ka Digital Saathi</p>
         </div>
       </div>
 

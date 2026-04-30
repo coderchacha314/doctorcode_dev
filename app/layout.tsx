@@ -4,10 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Clinical Luminance",
-    template: "%s | Clinical Luminance",
+    default: "SehatSaathi",
+    template: "%s | SehatSaathi",
   },
-  description: "Secure access to your clinical ecosystem",
+  description: "Har patient ka Digital Saathi",
 };
 
 export const viewport: Viewport = {

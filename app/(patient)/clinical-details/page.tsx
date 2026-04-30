@@ -107,6 +107,7 @@ export default function ClinicalDetailsPage(): React.ReactElement {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!form.dob)    errs.dob    = "Date of birth is required.";
+    else if (form.dob >= new Date().toISOString().slice(0, 10)) errs.dob = "Date of birth cannot be today or in the future.";
     if (!form.weight) errs.weight = "Weight is required.";
     if (!form.height) errs.height = "Height is required.";
     if (!form.gender) errs.gender = "Please select a gender.";
@@ -263,6 +264,7 @@ export default function ClinicalDetailsPage(): React.ReactElement {
           </label>
           <input
             type="date" value={form.dob}
+            max={new Date(Date.now() - 86400000).toISOString().slice(0, 10)}
             onChange={(e) => update("dob", e.target.value)}
             className={cn("input-field", errors.dob && "border-red-500/50")}
           />

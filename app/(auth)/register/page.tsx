@@ -80,16 +80,12 @@ export default function RegisterPage(): React.ReactElement {
     <div className="flex flex-col items-center gap-6">
       {/* Logo */}
       <div className="flex flex-col items-center gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/30 to-blue-700/30 border border-blue-500/30 flex items-center justify-center">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <path d="M16 4L6 10v12l10 6 10-6V10L16 4z" stroke="#60a5fa" strokeWidth="2" strokeLinejoin="round" />
-            <path d="M16 4v18M6 10l10 6 10-6" stroke="#60a5fa" strokeWidth="2" />
-          </svg>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="SehatSaathi" className="w-16 h-16 object-contain drop-shadow-lg" />
         <div className="text-center">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>Create Account</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-            Join Clinical Luminance for premium medical care
+          <p className="text-lg font-bold" style={{ color: "var(--color-text)" }}>SehatSaathi</p>
+          <p className="text-sm mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+            Har patient ka Digital Saathi
           </p>
         </div>
       </div>

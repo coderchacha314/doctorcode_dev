@@ -133,7 +133,7 @@ export default function ProfilePage(): React.ReactElement {
           <ArrowLeft size={18} />
         </Link>
         <h1 className="text-base font-semibold" style={{ color: "var(--color-text)" }}>Profile</h1>
-        <span className="text-xs font-medium" style={{ color: "var(--color-text-dim)" }}>Digital Sanctuary</span>
+        <span className="text-xs font-medium" style={{ color: "var(--color-text-dim)" }}>SehatSaathi</span>
       </div>
 
       {/* Avatar */}
@@ -243,7 +243,7 @@ export default function ProfilePage(): React.ReactElement {
       </div>
 
       <p className="text-center text-[10px] pb-4" style={{ color: "var(--color-text-dim)" }}>
-        DIGITAL SANCTUARY V4.2.0 — SECURE CLINICAL INSTANCE
+        SEHAT SAATHI — HAR PATIENT KA DIGITAL SAATHI
       </p>
     </div>
   );

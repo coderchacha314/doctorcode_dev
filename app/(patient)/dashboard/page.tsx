@@ -211,13 +211,10 @@ export default function DashboardPage(): React.ReactElement {
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
-                <path d="M16 4L6 10v12l10 6 10-6V10L16 4z" stroke="#60a5fa" strokeWidth="2.5" strokeLinejoin="round" />
-              </svg>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="SehatSaathi" className="w-8 h-8 object-contain" />
             <span className="text-xs text-blue-500 dark:text-blue-400 font-semibold tracking-wider">
-              Clinical Luminance
+              SehatSaathi
             </span>
           </div>
           <button
