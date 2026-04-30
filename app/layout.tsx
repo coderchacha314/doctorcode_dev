@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     default: "SehatSaathi",
     template: "%s | SehatSaathi",
   },
-  description: "Your health at your fingertips",
+  description: "Your Medical History. Anytime. Anywhere",
 };
 
 export const viewport: Viewport = {

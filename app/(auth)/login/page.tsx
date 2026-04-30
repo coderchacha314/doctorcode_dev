@@ -67,7 +67,7 @@ export default function LoginPage(): React.ReactElement {
         <img src="/logo.png" alt="SehatSaathi" className="w-20 h-20 object-contain drop-shadow-lg" />
         <div className="text-center">
           <p className="text-xl font-bold" style={{ color: "var(--color-text)" }}>SehatSaathi</p>
-          <p className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-text-muted)" }}>Your health at your fingertips</p>
+          <p className="text-xs font-medium tracking-wide mt-0.5" style={{ color: "var(--color-text-muted)" }}>Your Medical History. Anytime. Anywhere</p>
         </div>
       </div>
 
